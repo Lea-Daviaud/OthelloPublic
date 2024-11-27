@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+
+    <view
+
+        class="com.example.othello.GameView"
+        id="@+id/view"
+        layout_alignParentEnd="true"
+        layout_alignParentRight="true"
+        layout_alignParentTop="true"
+        layout_marginEnd="136dp"
+        layout_marginRight="136dp"
+        layout_marginTop="165dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</RelativeLayout>
