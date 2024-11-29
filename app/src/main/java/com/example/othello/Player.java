@@ -6,7 +6,7 @@ import android.graphics.Color;
 
 public class Player {
     String nom;
-    int color ;
+    int color;
 
     public Player() {
         this.nom = "vide";
