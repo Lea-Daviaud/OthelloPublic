@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -20,10 +21,8 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private float gridWidth;
     private float gridSeparatorSize;
     private float cellWidth;
-    private float buttonWidth;
-    private float buttonRadius;
-    private float buttonMargin;
     private GestureDetector gestureDetector;
+    TextView textViewdeux = MainActivity.textView;
 
     public static Player joueur1 = new Player("Léa", Color.WHITE);
     public static Player joueur2 = new Player("Aymeric", Color.BLACK);
@@ -48,18 +47,14 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
         // We compute some sizes
         gridSeparatorSize = (w / 9f) / 20f;
-
         gridWidth = w;                                  // Size of the grid (it's a square)
-        cellWidth = gridWidth / 9f;                     // Size of a cell (it's a square too)
-        buttonWidth = w / 7f;                           // Size of a button
-        buttonRadius = buttonWidth / 10f;               // Size of the rounded corner for a button
-        buttonMargin = (w - 6 * buttonWidth) / 7f;        // Margin between two buttons
+        cellWidth = gridWidth / 8f;                     // Size of a cell (it's a square too)
 
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-
+Log.i("lealea", MainActivity.textView+"");
         // --- Draw cells ---
 
         paint.setTextAlign(Paint.Align.CENTER);
@@ -94,6 +89,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             }
         }
 
+
+
+
         // --- Draw the grid lines ---
         paint.setColor(Color.GRAY);
         paint.setStrokeWidth(gridSeparatorSize / 2);
@@ -120,13 +118,17 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
 
     }
 
+    Player adversaire;
     Player currentPlayer = getCurrentPlayer();
 
+
     public Player getCurrentPlayer() {
-        if (currentPlayer == joueur1) {
-            return joueur2;
-        } else {
+        if (currentPlayer == joueur2) {
+            adversaire = joueur2;
             return joueur1;
+        } else {
+            adversaire = joueur1;
+            return joueur2;
         }
     }
 
@@ -138,244 +140,235 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
             int cellX = (int) (e.getX() / cellWidth);
             int cellY = (int) (e.getY() / cellWidth);
             Log.i("Leatrois", "celly: " + cellY + " / cellX :  " + cellX);
-            Player adversaire = currentPlayer;
             Log.i("Leatrois", adversaire.getColor() + "");
             // Check if the cell is already occupied
 
-            //diagonale droite haut
+            //diagonale droite haut 4
             int diaDH;
-            if ((7 - cellX) < cellY) {
-                diaDH = cellY;
-            } else {
+            if ((7 - cellX) < 7 - cellY) {
                 diaDH = (7 - cellX);
-
-            }
-
-            //diagonale bas droite
-            int diaBD;
-            if ((7 - cellX) < (7 - cellY)) {
-                diaBD = (7 - cellY);
             } else {
-                diaBD = (7 - cellX);
+                diaDH = (7 - cellY);
             }
 
-            //diagonale haut gauche
+            //diagonale bas droite 4
+            int diaBD;
+            if ((7 - cellX) < (cellY)) {
+                diaBD = (7 - cellX);
+            } else {
+                diaBD = ( cellY);
+            }
+
+            //diagonale haut gauche 4
             int diaHG;
-            if (cellX < cellY) {
+            if (cellX < (7-cellY)) {
                 diaHG = cellX;
             } else {
-                diaHG = cellY;
+                diaHG = 7-cellY;
             }
 
-            //diagonale bas gauche
+            //diagonale haut gauche 4 laaaa !
             int diaBG;
-            if (cellX < (7 - cellY)) {
-                diaBG = (7 - cellY);
-            } else {
+            if (cellX < (cellY)) {
                 diaBG = cellX;
+            } else {
+                diaBG = (cellY);
             }
-            try
-            {
-            for (int o = 0; o < diaDH; o++) {
+            try {
+                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()) {
+                    for (int o = 0; o < diaDH; o++) {
+                        if (//diagonale droite haut
+                                ((cellX + 1) < 8 && (cellY + 1) < 8 &&
+                                        gameBoard.cells[cellY + 1][cellX + 1].player.getColor() == adversaire.getColor() &&
+                                        gameBoard.cells[cellY + 1 + o][cellX + 1 + o].player.getColor() != new Player().getColor()
+                                        && gameBoard.cells[cellY + 1 + o][cellX + 1 + o].player.getColor() == currentPlayer.getColor())) {
 
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        //diagonale droite haut
-                        ((cellX + 1) < 8 && (cellY + 1) < 8 &&
-                                gameBoard.cells[cellY + 1][cellX + 1].player.getColor() == adversaire.getColor() &&
-                                gameBoard.cells[cellY + 1 + o][cellX + 1 + o].player.getColor() != new Player().getColor()
-                               && gameBoard.cells[cellY + 1 + o][cellX + 1 + o].player.getColor() == getCurrentPlayer().getColor()))) {
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
 
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
 
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
 
 
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= o; a++) {
-                        gameBoard.cells[cellY + 1 + a][cellX + 1 + a].player = currentPlayer;
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= o; a++) {
+                                gameBoard.cells[cellY + 1 + a][cellX + 1 + a].player = currentPlayer;
+                            }
+                        }
                     }
-                }
-            }
 
-            for (int i = 0; i < 7 - cellY; i++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        //vertical bas
-                        ((cellY + 1) < 8 &&
-                                gameBoard.cells[cellY + 1][cellX].player.getColor() == adversaire.getColor() &&
-                                gameBoard.cells[cellY + 1 + i][cellX].player.getColor() != new Player().getColor()
-                                &&   gameBoard.cells[cellY + 1 + i][cellX].player.getColor() == getCurrentPlayer().getColor())
-                )) {
+                    for (int i = 0; i < 7 - cellY; i++) {
+                        if (
+                            //vertical bas
+                                ((cellY + 1) < 8 &&
+                                        gameBoard.cells[cellY + 1][cellX].player.getColor() == adversaire.getColor() &&
+                                        gameBoard.cells[cellY + 1 + i][cellX].player.getColor() != new Player().getColor()
+                                        && gameBoard.cells[cellY + 1 + i][cellX].player.getColor() == currentPlayer.getColor())
+                        ) {
 
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
 
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
 
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= i; a++) {
-                        gameBoard.cells[cellY + 1 + a][cellX].player = currentPlayer;
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= i; a++) {
+                                gameBoard.cells[cellY + 1 + a][cellX].player = currentPlayer;
+                            }
+                        }
                     }
-                }
-            }
 
-            for (int k = 0; k <= 7 - cellX; k++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        ((cellX + 1) < 8 &&
-                                gameBoard.cells[cellY][cellX + 1].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY][cellX + 1 + k].player.getColor() != new Player().getColor() &&
-                                gameBoard.cells[cellY][cellX + 1 + k].player.getColor() == getCurrentPlayer().getColor())
-                )) {
+                    for (int k = 0; k < 7 - cellX; k++) {
+                        if (
+                                ((cellX + 1) < 8 &&
+                                        gameBoard.cells[cellY][cellX + 1].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY][cellX + 1 + k].player.getColor() != new Player().getColor() &&
+                                        gameBoard.cells[cellY][cellX + 1 + k].player.getColor() == currentPlayer.getColor())
+                        ) {
 
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
 
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= k; a++) {
-                        gameBoard.cells[cellY][cellX + 1 + a].player = currentPlayer;
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
+
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= k; a++) {
+                                gameBoard.cells[cellY][cellX + 1 + a].player = currentPlayer;
+
+                            }
+                        }
+                    }
+
+                    for (int m = 0; m < diaBG; m++) {
+                        if (
+                            //diagonale bas gauche
+                                ((cellX - 1) >= 0 && (cellY - 1) >= 0 &&
+                                        gameBoard.cells[cellY - 1][cellX - 1].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY - 1 - m][cellX - 1 - m].player.getColor() != new Player().getColor() &&
+                                        gameBoard.cells[cellY - 1 - m][cellX - 1 - m].player.getColor() == currentPlayer.getColor())
+                        ) {
+
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
+
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= m; a++) {
+                                gameBoard.cells[cellY - 1 - a][cellX - 1 - a].player = currentPlayer;
+
+                            }
+                        }
+                    }
+
+                    for (int b = 0; b < cellX; b++) {
+                        if (
+                                ((cellX - 1) >= 0 &&
+                                        gameBoard.cells[cellY][cellX - 1].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY][cellX - 1 - b].player.getColor() != new Player().getColor() &&
+                                        gameBoard.cells[cellY][cellX - 1 - b].player.getColor() == currentPlayer.getColor())
+                        ) {
+
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
+
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= b; a++) {
+                                gameBoard.cells[cellY][cellX - 1 - a].player = currentPlayer;
+                            }
+                        }
+                    }
+
+
+                    for (int g = 0; g < cellY; g++) {
+                        if (
+                                ((cellY - 1) >= 0 &&
+                                        gameBoard.cells[cellY - 1][cellX].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY - 1 - g][cellX].player.getColor() != new Player().getColor() &&
+                                        gameBoard.cells[cellY - 1 - g][cellX].player.getColor() == currentPlayer.getColor())
+                        ) {
+
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
+
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= g; a++) {
+                                gameBoard.cells[cellY - 1 - a][cellX].player = currentPlayer;
+                            }
+                        }
+                    }
+
+
+                    for (int h = 0; h < diaHG; h++) {
+                        if (
+                            //diagonale gauche haut
+                                ((cellX - 1) >= 0 && (cellY + 1) < 8 &&
+                                        gameBoard.cells[cellY + 1][cellX - 1].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY + 1 + h][cellX - 1 - h].player.getColor() != new Player().getColor()
+                                        && gameBoard.cells[cellY + 1 + h][cellX - 1 - h].player.getColor() == currentPlayer.getColor())
+                        ) {
+
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
+
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
+
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= h; a++) {
+                                gameBoard.cells[cellY + 1 + a][cellX - 1 - a].player = currentPlayer;
+                            }
+                        }
+
 
                     }
-                }
-            }
+                    for (int p = 0; p < diaBD; p++) {
+                        if (
+                            //diagonale droite bas
+                                ((cellY - 1) >= 0 && (cellX + 1) < 8 &&
+                                        gameBoard.cells[cellY - 1][cellX + 1].player.getColor() == adversaire.getColor()
+                                        && gameBoard.cells[cellY - 1 - p][cellX + 1 + p].player.getColor() != new Player().getColor()
+                                        && gameBoard.cells[cellY - 1 - p][cellX + 1 + p].player.getColor() == currentPlayer.getColor())
+                        ) {
 
-            for (int m = 0; m < diaBG; m++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        //diagonale bas gauche
-                        ((cellX - 1) >= 0 && (cellY - 1) >= 0 &&
-                                gameBoard.cells[cellY - 1][cellX - 1].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY - 1 - m][cellX - 1 - m].player.getColor() != new Player().getColor() &&
-                                gameBoard.cells[cellY - 1 - m][cellX - 1 - m].player.getColor() == getCurrentPlayer().getColor())
-                )) {
+                            //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
 
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
+                            // Change the color of the cell to the current player's color
+                            Log.i("Lea", "dans if deux");
 
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
+                            gameBoard.cells[cellY][cellX].player = currentPlayer;
 
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= m; a++) {
-                        gameBoard.cells[cellY - 1 - a][cellX - 1 - a].player = currentPlayer;
-
+                            //changer couleur dans l'intervalle
+                            for (int a = 0; a <= p; a++) {
+                                gameBoard.cells[cellY - 1 - a][cellX + 1 + a].player = currentPlayer;
+                            }
+                        }
                     }
-                }
-            }
-
-            for (int b = 0; b <= cellX; b++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        ((cellX - 1) >= 0 &&
-                                gameBoard.cells[cellY][cellX - 1].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY][cellX - 1 - b].player.getColor() != new Player().getColor() &&
-                                gameBoard.cells[cellY][cellX - 1 - b].player.getColor() == getCurrentPlayer().getColor())
-                )) {
-
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
-
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
                     currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
-
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= b; a++) {
-                        gameBoard.cells[cellY][cellX - 1 - a].player = currentPlayer;
-                    }
-                }
-            }
-
-
-            for (int g = 0; g <= cellY; g++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        ((cellY - 1) >= 0 &&
-                                gameBoard.cells[cellY - 1][cellX].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY - 1 - g][cellX].player.getColor() != new Player().getColor() &&
-                                gameBoard.cells[cellY - 1 - g][cellX].player.getColor() == getCurrentPlayer().getColor())
-                )) {
-
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
-
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= g; a++) {
-                        gameBoard.cells[cellY - 1 - a][cellX].player = currentPlayer;
-                    }
-                }
-            }
-
-
-            for (int h = 0; h < diaHG; h++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        //diagonale gauche haut
-                        ((cellX - 1) >= 0 && (cellY + 1) < 8 &&
-                                gameBoard.cells[cellY + 1][cellX - 1].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY + 1 + h][cellX - 1 - h].player.getColor() != new Player().getColor()
-                                && gameBoard.cells[cellY + 1 + h][cellX - 1 - h].player.getColor() == getCurrentPlayer().getColor())
-                )) {
-
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
-
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
-
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= h; a++) {
-                        gameBoard.cells[cellY + 1 + a][cellX - 1 - a].player = currentPlayer;
-                    }
+                    Log.i("icic", "onSingleTapUp: "+MainActivity.textView.getText());
+                    MainActivity.textView.setText("Au tour de : " + currentPlayer.getNom()+"");
                 }
 
-
-            }
-            for (int p = 0; p < diaBD; p++) {
-                if (gameBoard.cells[cellY][cellX].player.getColor() == new Player().getColor()
-                        && (
-                        //diagonale droite bas
-                        ((cellY - 1) >= 0 && (cellX + 1) < 8 &&
-                                gameBoard.cells[cellY - 1][cellX + 1].player.getColor() == adversaire.getColor()
-                                && gameBoard.cells[cellY - 1 - p][cellX + 1 + p].player.getColor() != new Player().getColor()
-                                && gameBoard.cells[cellY - 1 - p][cellX + 1 + p].player.getColor() == getCurrentPlayer().getColor())
-                )) {
-
-                    //  Log.i("lea", gameBoard.cells[cellY + 2][cellX]+"");
-
-                    // Change the color of the cell to the current player's color
-                    Log.i("Lea", "dans if deux");
-                    currentPlayer = getCurrentPlayer();
-                    gameBoard.cells[cellY][cellX].player = currentPlayer;
-
-                    //changer couleur dans l'intervalle
-                    for (int a = 0; a <= p; a++) {
-                        gameBoard.cells[cellY - 1 - a][cellX + 1 + a].player = currentPlayer;
-                    }
-                }
-            }
-
-            gameBoard.currentCellX = cellX;
-            gameBoard.currentCellY = cellY;
-            postInvalidate(); // Redraw the view
-            return true;
-        }catch (Resources.NotFoundException i)
-            {
-                Log.i("ERROR","Value Not fetched");
+                gameBoard.currentCellX = cellX;
+                gameBoard.currentCellY = cellY;
+                postInvalidate(); // Redraw the view
+                return true;
+            } catch (Resources.NotFoundException i) {
+                Log.i("ERROR", "Value Not fetched");
             }
         }
 

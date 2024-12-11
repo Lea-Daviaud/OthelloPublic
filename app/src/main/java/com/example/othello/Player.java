@@ -21,5 +21,18 @@ public class Player {
     public int getColor() {
         return color;
     }
+
+    public String getNom() {
+        return nom;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public void setColor(int color) {
+        this.color = color;
+    }
 }
+
 

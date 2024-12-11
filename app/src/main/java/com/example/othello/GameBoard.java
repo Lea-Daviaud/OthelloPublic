@@ -19,9 +19,7 @@ public class GameBoard {
             this.player = player;
 
         }
-
     }
-
 
     public GameLevel level;
 
