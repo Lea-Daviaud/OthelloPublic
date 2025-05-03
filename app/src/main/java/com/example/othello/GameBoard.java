@@ -1,15 +1,14 @@
 package com.example.othello;
 
-
 import android.graphics.Color;
 
 /**
- * This class represent the grid. (of type GameCell).
+ * Cette classe représente le plateau de jeu (de type GameCell).
  */
 public class GameBoard {
 
     /**
-     * This class represent one cell and it's informations.
+     * Cette classe représente une cellule et ses informations.
      */
     public static class GameCell {
 
@@ -17,7 +16,6 @@ public class GameBoard {
 
         public GameCell(Player player) {
             this.player = player;
-
         }
     }
 
@@ -26,14 +24,13 @@ public class GameBoard {
     public int currentCellX = -1;
     public int currentCellY = -1;
 
-
     public GameCell[][] cells;
 
     /**
-     * The class constructor
+     * Constructeur privé de la classe GameBoard.
      *
-     * @param level The associated level.
-     * @param cells The states for each cells of the grid.
+     * @param level Le niveau associé.
+     * @param cells L'état de chaque cellule du plateau.
      */
     private GameBoard(GameLevel level, GameCell[][] cells) {
         this.level = level;
@@ -41,80 +38,74 @@ public class GameBoard {
     }
 
     /**
-     * Return the currently selected value. A cell must be selected, otherwise 0 is returned.
+     * Méthode pour obtenir la valeur actuellement sélectionnée.
+     * Si aucune cellule n'est sélectionnée, retourne un joueur vide.
      */
     public Player getSelectedValue() {
-        // We need to know the current cell
-        if (this.currentCellX == -1) return new Player();
-        if (this.currentCellY == -1) return new Player();
+        // Vérifie si une cellule est sélectionnée
+        if (this.currentCellX == -1 || this.currentCellY == -1) {
+            return new Player(); // Retourne un joueur vide si aucune cellule n'est sélectionnée
+        }
 
         GameCell currentCell = this.cells[this.currentCellY][this.currentCellX];
         return currentCell.player;
     }
 
     /**
-     * This method change the state of the selected cell for this grid.
-     * If no cell is selected, the method do nothing.
-     * We cannot change the state af an initial state.
+     * Méthode pour changer l'état de la cellule sélectionnée.
+     * Si aucune cellule n'est sélectionnée, la méthode ne fait rien.
+     * On ne peut pas changer l'état d'une cellule initiale.
      *
-     * @param value The value to insert in the selected cell
-     * @return
+     * @param value La valeur à insérer dans la cellule sélectionnée.
      */
     public void pushValue(Player value) {
-        // We need to know the current cell
-        if (this.currentCellX == -1) return;
-        if (this.currentCellY == -1) return;
+        if (this.currentCellX == -1 || this.currentCellY == -1) {
+            return; // Si aucune cellule n'est sélectionnée, ne rien faire
+        }
 
         GameCell currentCell = this.cells[this.currentCellY][this.currentCellX];
-        // We cannot update an initial cell
-
+        // Si la cellule est vide (non initialisée), on peut mettre la valeur
         if (currentCell.player == new Player()) {
-            // Modifier la valeur supposée
             currentCell.player = value;
-
         }
     }
 
     /**
-     * A factory method that produce an initial grid to solve.
+     * Méthode de fabrique pour créer un plateau de jeu initial.
+     * Actuellement, seul le niveau MEDIUM est supporté.
      *
-     * @param level Just the medium level is actually supported
-     * @return A new grid to solve.
+     * @param level Le niveau de difficulté (actuellement seul le niveau MEDIUM est supporté).
+     * @return Un nouveau plateau de jeu à résoudre.
      */
     public static GameBoard getGameBoard(GameLevel level) {
+        if (level != GameLevel.MEDIUM) throw new RuntimeException("Niveau non implémenté");
 
-        if (level != GameLevel.MEDIUM) throw new RuntimeException("Not actually implemented");
+        // Initialisation du plateau avec des cases vides
+        GameCell[][] cells = new GameCell[8][8];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                cells[i][j] = new GameCell(new Player()); // Remplir toutes les cases avec un joueur vide
+            }
+        }
 
-        // TODO add code for generate differents Grid for each level
+        // Placer les pièces initiales pour un plateau standard
+        cells[3][3] = new GameCell(GameView.joueur1);
+        cells[3][4] = new GameCell(GameView.joueur2);
+        cells[4][3] = new GameCell(GameView.joueur2);
+        cells[4][4] = new GameCell(GameView.joueur1);
 
-        return new GameBoard(level, new GameCell[][]{
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(GameView.joueur1), new GameCell(GameView.joueur2), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(GameView.joueur2), new GameCell(GameView.joueur1), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())},
-                {new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player()), new GameCell(new Player()),
-                        new GameCell(new Player()), new GameCell(new Player())}
-        });
+        return new GameBoard(level, cells);
     }
 
+    /**
+     * Méthode pour inverser les pièces autour de la cellule sélectionnée, après un coup valide.
+     */
+    public void flipPieces(int x, int y, Player currentPlayer, Player adversaire) {
+        // Logique d'inversion des pièces, selon les règles du jeu Othello.
+        // Cette méthode pourrait être utilisée après un coup validé pour inverser les pièces autour.
+        // Exemple de gestion pour la diagonale, les lignes et les colonnes :
+
+        // (On pourrait ajouter des boucles pour vérifier chaque direction autour de la cellule)
+        // Cette partie nécessite une logique spécifique, dépendant des règles d'othello.
+    }
 }

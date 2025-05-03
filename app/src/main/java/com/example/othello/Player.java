@@ -1,9 +1,5 @@
 package com.example.othello;
 
-import static android.graphics.Color.WHITE;
-
-import android.graphics.Color;
-
 public class Player {
     String nom;
     int color;

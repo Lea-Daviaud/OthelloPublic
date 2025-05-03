@@ -2,6 +2,8 @@ package com.example.othello;
 
 import static com.example.othello.GameView.joueur1;
 import static com.example.othello.GameView.joueur2;
+
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -12,9 +14,12 @@ import android.Manifest;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.CallSuper;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.othello.databinding.ActivityMainBinding;
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.AdvertisingOptions;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
@@ -63,6 +68,12 @@ public class MainActivity extends AppCompatActivity {
                 setGameControllerEnabled(true);
             }
     };
+    private void setGameControllerEnabled(boolean enabled) {
+        // Exemple pour activer/désactiver des boutons ou des vues de ton jeu
+        binding.findOpponent.setEnabled(enabled); // Si tu as un bouton "findOpponent"
+        // Active ou désactive d'autres vues de ton jeu ici, par exemple :
+        // binding.otherButton.setEnabled(enabled);
+    }
 
     // Rappels pour les connexions à d'autres appareils
     private final ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
@@ -152,12 +163,19 @@ public class MainActivity extends AppCompatActivity {
     @CallSuper
     protected void onStart() {
         super.onStart();
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    REQUEST_CODE_REQUIRED_PERMISSIONS
-            );
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            // Affiche une explication à l'utilisateur
+            new AlertDialog.Builder(this)
+                    .setMessage("Cette permission est nécessaire pour trouver des joueurs à proximité.")
+                    .setPositiveButton("OK", (dialog, which) -> requestPermissions(
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            REQUEST_CODE_REQUIRED_PERMISSIONS
+                    ))
+                    .show();
+        } else {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_REQUIRED_PERMISSIONS);
         }
+
     }
 
     @Override
