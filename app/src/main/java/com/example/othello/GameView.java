@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -13,6 +14,11 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 public class GameView extends View implements GestureDetector.OnGestureListener {
+    private static final int NUM_ROWS = 8;
+    private static final int NUM_COLS = 8;
+    // Static players for now
+    public static Player joueur1 = new Player( Color.WHITE);
+    public static Player joueur2 = new Player( Color.BLACK);
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final GameBoard gameBoard = GameBoard.getGameBoard(GameLevel.MEDIUM);
     private float gridWidth;
@@ -20,23 +26,16 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     private float gridSeparatorSize;
     private float cellWidth;
     private GestureDetector gestureDetector;
-
-    // Static players for now
-    public static Player joueur1 = new Player("Léa", Color.WHITE);
-    public static Player joueur2 = new Player("Aymeric", Color.BLACK);
     private Player currentPlayer = joueur1; // Start with joueur1
     private Player adversaire = joueur2;
-
     // TextView to show turn information (assumes that MainActivity provides it)
     private TextView textViewdeux = MainActivity.textView;
+    private int cellSize; // Taille d'une cellule (en pixels)
+    private OnCellClickListener onCellClickListener;
 
     public GameView(Context context) {
         super(context);
         this.init();
-    }
-
-    private void init() {
-        gestureDetector = new GestureDetector(getContext(), this);
     }
 
     public GameView(Context context, @Nullable AttributeSet attrs) {
@@ -44,18 +43,17 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         this.init();
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        gridSeparatorSize = (w / 9f) / 20f;
-        gridWidth = w; // Square grid
-        cellWidth = gridWidth / 8f; // 8x8 grid
+    private void init() {
+        gestureDetector = new GestureDetector(getContext(), this);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        Log.d("GameView", "onDraw appelé");
         paint.setTextAlign(Paint.Align.CENTER);
         paint.setTextSize(cellWidth * 0.7f);
+
 
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
@@ -66,10 +64,11 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
                 canvas.drawRect(x * cellWidth, y * cellWidth, (x + 1) * cellWidth, (y + 1) * cellWidth, paint);
 
                 if (gameBoard.cells[y][x].player != null) {
+                    Log.d("GameView", "Pion trouvé à [" + y + ", " + x + "], couleur: " + gameBoard.cells[y][x].player.getColor());
                     // Draw the player disc
                     paint.setColor(gameBoard.cells[y][x].player.getColor());
-                    canvas.drawArc(x * cellWidth, y * cellWidth, (x + 1) * cellWidth, (y + 1) * cellWidth, 0, 360, true, paint);
-                }
+                    float radius = cellWidth * 0.4f;
+                    canvas.drawCircle((x + 0.5f) * cellWidth, (y + 0.5f) * cellWidth, radius, paint);                }
             }
         }
 
@@ -82,9 +81,31 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         }
     }
 
+    // Appelé lorsque la taille de la vue change (ex: à l'affichage initial)
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+
+        int boardSize = Math.min(w, h); // on garde un plateau carré
+        cellSize = boardSize / 8;       // 8x8 cellules pour Othello
+        cellWidth = cellSize;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return gestureDetector.onTouchEvent(event);
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            float x = event.getX();
+            float y = event.getY();
+
+            int col = (int) (x / cellSize);
+            int row = (int) (y / cellSize);
+
+            if (onCellClickListener != null) {
+                onCellClickListener.onCellClick(row, col);
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -93,22 +114,36 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     }
 
     @Override
-    public void onShowPress(MotionEvent e) {}
+    public void onShowPress(MotionEvent e) {
+    }
+
+    public void setGameLogic(GameLogic gameLogic) {
+        this.gameLogic = gameLogic;
+    }
+
+    public void setOnCellClickListener(OnCellClickListener listener) {
+        this.onCellClickListener = listener;
+    }
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-        if (e.getY() < gridWidth) {
+        if (e.getY() < getHeight()) {
             int cellX = (int) (e.getX() / cellWidth);
             int cellY = (int) (e.getY() / cellWidth);
+
+            Log.d("GameView", "Cell selected: " + cellX + "," + cellY);
 
             // Check if the clicked cell is empty
             if (gameBoard.cells[cellY][cellX].player == null) {
                 // Try to place a disc for the current player
-                if (isValidMove(cellX, cellY, currentPlayer)) {
+                if (gameLogic != null && gameLogic.isValidMove(cellX, cellY, currentPlayer)) {
+                    Log.d("GameView", "Valid move for player: " + currentPlayer.getColor());
                     placeDisc(cellX, cellY, currentPlayer);
                     togglePlayer();
                     updateTurnText();
                     postInvalidate(); // Redraw the view
+                } else {
+                    Log.d("GameView", "Invalid move for player: " + currentPlayer.getColor());
                 }
             }
             return true;
@@ -116,15 +151,11 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         return false;
     }
 
-    private boolean isValidMove(int cellX, int cellY, Player player) {
-        // Validate if the move is legal
-        return gameBoard.isValidMove(cellX, cellY, player);
-    }
-
     private void placeDisc(int cellX, int cellY, Player player) {
         gameBoard.cells[cellY][cellX].player = player;
-        // Flip opponent's discs if necessary
+        Log.d("GameView", "Disc placed at: " + cellX + "," + cellY);
         gameBoard.flipDiscs(cellX, cellY, player);
+        postInvalidate();
     }
 
     private void togglePlayer() {
@@ -138,13 +169,19 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
         }
     }
 
-    private void updateTurnText() {
-        textViewdeux.setText("Au tour de: " + currentPlayer.getNom());
+    private String getColorName(Player player) {
+        return player.getColor() == Color.BLACK ? "Noir" : "Blanc";
     }
+
+    private void updateTurnText() {
+        textViewdeux.setText("Au tour de: " + getColorName(currentPlayer));
+    }
+
 
     // Unused gesture methods
     @Override
-    public void onLongPress(MotionEvent e) {}
+    public void onLongPress(MotionEvent e) {
+    }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
@@ -154,5 +191,9 @@ public class GameView extends View implements GestureDetector.OnGestureListener 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         return false;
+    }
+
+    public interface OnCellClickListener {
+        void onCellClick(int row, int col);
     }
 }

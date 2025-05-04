@@ -1,10 +1,13 @@
 package com.example.othello;
 
+import android.graphics.Color;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class GameAgainstComputerActivity extends AppCompatActivity {
     private GameView gameView;
@@ -13,7 +16,37 @@ public class GameAgainstComputerActivity extends AppCompatActivity {
 
     private boolean isPlayerTurn = true;  // Pour savoir si c'est le tour du joueur ou de l'ordinateur
     private GameLogic gameLogic;  // Classe logique pour gérer les règles du jeu
-
+    public int[] getBestMove(int playerType) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (gameLogic.isValidMove(i, j, new Player(playerType))) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        return null;
+    }
+    private void computerTurn() {
+        int[] move = gameLogic.getBestMove(GameLogic.COMPUTER);
+        if (move != null) {
+            gameLogic.makeMove(move[0], move[1], GameLogic.COMPUTER);
+            gameView.invalidate();
+            checkGameStatus();
+            isPlayerTurn = true;
+            Log.d("Game", "Tour de l'ordinateur : " + move[0] + ", " + move[1]);
+            statusText.setText("Au tour du joueur");
+        } else {
+            // Aucun coup possible pour l'ordinateur
+            if (gameLogic.hasValidMove(GameLogic.PLAYER)) {
+                isPlayerTurn = true;
+                statusText.setText("Aucun coup possible pour l'ordinateur. À vous de jouer !");
+            } else {
+                // Aucun coup possible pour les deux → fin du jeu
+                checkGameStatus();
+            }
+        }
+    }
+GameBoard gameBoard;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,8 +56,8 @@ public class GameAgainstComputerActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         resetButton = findViewById(R.id.resetButton);
 
-        gameLogic = new GameLogic();  // Initialisation de la logique du jeu
-
+        gameBoard = new GameBoard(); // ou récupéré autrement
+        gameLogic = new GameLogic(gameBoard);
         // Affichage du statut initial
         statusText.setText("Au tour du joueur");
 
@@ -44,11 +77,24 @@ public class GameAgainstComputerActivity extends AppCompatActivity {
             @Override
             public void onCellClick(int row, int col) {
                 if (isPlayerTurn) {
-                    if (gameLogic.isValidMove(row, col, GameLogic.PLAYER)) {
-                        gameLogic.makeMove(row, col, GameLogic.PLAYER);
+                    // Créer un objet Player pour le joueur humain
+                    int playerColor = GameLogic.PLAYER;
+                    if (playerColor != Color.BLACK && playerColor != Color.WHITE) {
+                        Log.e("Player Color", "Couleur invalide: " + playerColor);
+                        return;  // Ne pas créer un joueur si la couleur est invalide
+                    }
+
+                    // Créer un objet Player pour le joueur humain
+                    Player player = new Player(playerColor);
+                    // Vérifier si le mouvement est valide
+                    if (gameLogic.isValidMove(row, col, player)) {
+                        Log.d("Game", "Coup valide : " + row + ", " + col);
+                        gameLogic.makeMove(row, col, playerColor);
+                        Log.d("Game", "Coup joué : " + row + ", " + col);
                         gameView.invalidate();  // Rafraîchit l'affichage du jeu
                         checkGameStatus();
                         isPlayerTurn = false;
+                        Log.d("Game", "Tour passé à l'ordinateur");
                         statusText.setText("Au tour de l'ordinateur");
 
                         // Après un léger délai, l'ordinateur joue
@@ -56,11 +102,11 @@ public class GameAgainstComputerActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 try {
-                                    Thread.sleep(1000);  // Attendre avant de jouer
+                                    Thread.sleep(500);  // Attente d'un demi-seconde avant que l'ordinateur ne joue
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            computerTurn();
+                                            computerTurn();  // Tour de l'ordinateur
                                         }
                                     });
                                 } catch (InterruptedException e) {
@@ -68,22 +114,13 @@ public class GameAgainstComputerActivity extends AppCompatActivity {
                                 }
                             }
                         }).start();
+                    } else {
+                        Log.d("Game", "Coup invalide : " + row + ", " + col);
                     }
                 }
             }
-        });
-    }
 
-    private void computerTurn() {
-        // L'ordinateur fait son mouvement
-        int[] move = gameLogic.getBestMove(GameLogic.COMPUTER);
-        if (move != null) {
-            gameLogic.makeMove(move[0], move[1], GameLogic.COMPUTER);
-            gameView.invalidate();
-            checkGameStatus();
-            isPlayerTurn = true;
-            statusText.setText("Au tour du joueur");
-        }
+        });
     }
 
     private void checkGameStatus() {

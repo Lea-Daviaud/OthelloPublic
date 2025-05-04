@@ -3,21 +3,17 @@ package com.example.othello;
 import static com.example.othello.GameView.joueur1;
 import static com.example.othello.GameView.joueur2;
 
-import android.app.AlertDialog;
-import android.os.Bundle;
-import android.util.Log;
-import android.widget.TextView;
-import android.content.pm.PackageManager;
-import android.view.View;
-import android.widget.Toast;
 import android.Manifest;
-import androidx.activity.EdgeToEdge;
+import android.app.AlertDialog;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.CallSuper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.othello.databinding.ActivityMainBinding;
 import com.google.android.gms.nearby.Nearby;
@@ -34,24 +30,21 @@ import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
 
-//import com.example.pfciseaux.databinding.ActivityMainBinding;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Random;
-
 public class MainActivity extends AppCompatActivity {
 
+    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
+    static TextView textView;
     private final Strategy STRATEGY = Strategy.P2P_STAR;
     private ConnectionsClient connectionsClient;
-    private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
-    private String opponentName = null;
+    private Player opponent;
     private String opponentEndpointId = null;
     private int opponentScore = 0;
-    private String myCodeName;
+
+    private Player currentPlayer;  // Joueur actuel (moi)
+    private Player opponentPlayer;  // Joueur adverse
+    private int myCodeName;
     private int myScore = 0;
-
     private ActivityMainBinding binding;
-
     private final PayloadCallback payloadCallback = new PayloadCallback() {
         @Override
         public void onPayloadReceived(String endpointId, Payload payload) {
@@ -65,16 +58,9 @@ public class MainActivity extends AppCompatActivity {
             // Détermine le gagnant et met à jour l'état du jeu/l'interface utilisateur une fois que les deux joueurs ont choisi.
             //// N'hésitez pas à refactoriser et à extraire ce code dans une méthode différente
 
-                setGameControllerEnabled(true);
-            }
+            setGameControllerEnabled(true);
+        }
     };
-    private void setGameControllerEnabled(boolean enabled) {
-        // Exemple pour activer/désactiver des boutons ou des vues de ton jeu
-        binding.findOpponent.setEnabled(enabled); // Si tu as un bouton "findOpponent"
-        // Active ou désactive d'autres vues de ton jeu ici, par exemple :
-        // binding.otherButton.setEnabled(enabled);
-    }
-
     // Rappels pour les connexions à d'autres appareils
     private final ConnectionLifecycleCallback connectionLifecycleCallback = new ConnectionLifecycleCallback() {
         @Override
@@ -82,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
             // Accepter une connexion signifie que vous souhaitez recevoir des messages. Par conséquent, l'API s'attend à ce que
             // vous attachiez un PayloadCall à l'acceptation
             connectionsClient.acceptConnection(endpointId, payloadCallback);
-            opponentName = "Opponent\n(" + info.getEndpointName() + ")";
+          //  opponent = new Player(info.getEndpointName()); // Le nom de l'adversaire vient de l'info de la connexion
+            opponentPlayer = new Player(Player.WHITE);
         }
 
         @Override
@@ -105,17 +92,23 @@ public class MainActivity extends AppCompatActivity {
     private final EndpointDiscoveryCallback endpointDiscoveryCallback = new EndpointDiscoveryCallback() {
         @Override
         public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
-            connectionsClient.requestConnection(myCodeName, endpointId, connectionLifecycleCallback);
+            // Convertit myCodeName en String avant de l'utiliser dans requestConnection
+            connectionsClient.requestConnection(String.valueOf(myCodeName), endpointId, connectionLifecycleCallback);
         }
 
         @Override
         public void onEndpointLost(String endpointId) {
-
+            // Rien à faire ici pour l'instant
         }
     };
 
 
-    static TextView textView;
+    private void setGameControllerEnabled(boolean enabled) {
+        // Exemple pour activer/désactiver des boutons ou des vues de ton jeu
+        binding.findOpponent.setEnabled(enabled); // Si tu as un bouton "findOpponent"
+        // Active ou désactive d'autres vues de ton jeu ici, par exemple :
+        // binding.otherButton.setEnabled(enabled);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,22 +116,21 @@ public class MainActivity extends AppCompatActivity {
 
         // setContentView(R.layout.activity_main);
         textView = findViewById(R.id.currentPl);
-        if (opponentName == joueur2.getNom()) {
-            myCodeName = joueur1.getNom();
-        } else {
-            myCodeName = joueur2.getNom();
-        }
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
         connectionsClient = Nearby.getConnectionsClient(this);
 
+        // Initialisation des joueurs (le joueur local est joueur 1)
+        currentPlayer = new Player(Player.BLACK); // Le joueur local est toujours noir
+        myCodeName = currentPlayer.getColor();
 
+        // Lorsque l'utilisateur clique sur "findOpponent"
         binding.findOpponent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startAdvertising();
                 startDiscovery();
-
             }
         });
 
@@ -152,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Note: Advertising may fail. To keep this demo simple, we don't handle failures.
         connectionsClient.startAdvertising(
-                myCodeName,
+                String.valueOf(myCodeName),
                 getPackageName(),
                 connectionLifecycleCallback,
                 options
@@ -201,10 +193,10 @@ public class MainActivity extends AppCompatActivity {
     private void resetGame() {
         // reset data
         opponentEndpointId = null;
-        opponentName = null;
+        opponent = null;
         opponentScore = 0;
         myScore = 0;
-
+        currentPlayer = new Player(Player.BLACK); // Recommence avec le joueur local comme joueur noir
     }
 
     private void startDiscovery() {

@@ -1,16 +1,20 @@
 package com.example.othello;
 
+import android.graphics.Color;
+
 public class Player {
-    String nom;
-    int color;
+    public static final int EMPTY = 0;
+    public static final int BLACK = 1;  // Humain ou joueur 1
+    public static final int WHITE = 2;  // Ordinateur ou joueur 2
+    private  int color;
 
     public Player() {
-        this.nom = "vide";
-        this.color = 0;
+        this.color = EMPTY;
     }
-
-    public Player(String nom, int color) {
-        this.nom = nom;
+    public Player(int color) {
+        if (color != Color.BLACK && color != Color.WHITE) {
+            throw new IllegalArgumentException("Couleur invalide pour un joueur");
+        }
         this.color = color;
     }
 
@@ -18,17 +22,27 @@ public class Player {
         return color;
     }
 
-    public String getNom() {
-        return nom;
-    }
 
-    public void setNom(String nom) {
-        this.nom = nom;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Player)) return false;
+        Player other = (Player) obj;
+        return this.color == other.color;
     }
 
     public void setColor(int color) {
+        if (color != BLACK && color != WHITE && color != EMPTY) {
+            throw new IllegalArgumentException("Couleur invalide pour un joueur");
+        }
         this.color = color;
     }
+
+    public boolean isEmpty() {
+        return this.color == EMPTY;
+    }
+
+    public boolean isOpponent(Player other) {
+        return other != null && this.color != EMPTY && other.color != this.color;
+    }
 }
-
-
